@@ -1,74 +1,74 @@
-\# crackme0x1 by pickled – crackmes.one
+# crackme0x1 by pickled – crackmes.one
 
 
 
-\- Link: https://crackmes.one/crackme/5ab77f5433c5d40ad448c16d
+- Link: https://crackmes.one/crackme/5ab77f5433c5d40ad448c16d
 
-\- Date: 19/08/2026
+- Date: 19/08/2026
 
-\- Level: <1.0>
+- Level: <1.0>
 
-\- Target: PE x86
+- Target: PE x86
 
-\- Tools: Ghidra, x64dbg, strings
-
-
-
-\## Goal
+- Tools: Ghidra, x64dbg, strings
 
 
+
+## Goal
 
 
 
 
 
-\## My flow (raw)
+
+
+## My flow (raw)
 
 
 
-\- First impression:
+- First impression:
 
 &#x20; - <what I noticed first: strings, obvious checks, etc.>
 
-\- What I tried:
+- What I tried:
 
 &#x20; - <attempt 1: what I did, what happened>
 
 &#x20; - <attempt 2: dead end, wrong assumption, etc.>
 
-\- Where I got stuck:
+- Where I got stuck:
 
 &#x20; - <specific function / check / idea that confused me>
 
-\- Breakthrough:
+- Breakthrough:
 
 &#x20; - <what finally worked: which function, which condition, which patch>
 
 
 
-\## What I learned
+## What I learned
 
 
 
-\- <pattern / technique / tool trick>
+- <pattern / technique / tool trick>
 
-\- <thing I’ll do differently next time>
+- <thing I’ll do differently next time>
 
-\- <new concept: e.g., “first time seeing XOR decode loop”>
-
-
-
-\## Technical details (optional)
+- <new concept: e.g., “first time seeing XOR decode loop”>
 
 
 
-\- Key addresses / function names:
+## Technical details (optional)
+
+
+
+- Key addresses / function names:
 
 &#x20; - `main` at `0x...`
 
 &#x20; - check function at `0x...`
 
-\- Important logic (pseudo‑code / decompiled snippet):
+- Important logic (pseudo‑code / decompiled snippet):
 
 &#x20; ```c
 
@@ -82,7 +82,7 @@
 
 &#x20; ```
 
-\- Patch / solution (if allowed):
+- Patch / solution (if allowed):
 
 &#x20; - Offset / address: `0x...`
 
@@ -94,7 +94,7 @@
 
 
 
-\## Updates
+## Updates
 
 
 
