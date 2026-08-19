@@ -4,7 +4,7 @@
 - **Date:** 2026-08-19  
 - **Level:** 1.0  
 - **Target:** PE x86  
-- **Tools:** Ghidra, `strings`, Wine  
+- **Tools:** Ghidra, `strings`, Wine, VMware Workstation Pro  
 
 ## Goal
 
