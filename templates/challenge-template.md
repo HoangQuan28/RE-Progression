@@ -1,10 +1,10 @@
-# <Challenge Name> – <Site>
+# Challenge Name – Site
 
 
 
-- Link: <URL>
+- Link: URL
 
-- Date: <YYYY-MM-DD>
+- Date: YYYY-MM-DD
 
 - Level: <very easy / easy / 1.0 / etc.>
 
