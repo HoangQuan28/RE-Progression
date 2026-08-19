@@ -1,172 +1,212 @@
-# crackme0x1 by picklede – crackmes.one
+# crackme0x1 by picklede
 
-- **Link:** https://crackmes.one/crackme/5ab77f5433c5d40ad448c16d  
-- **Date:** 2026-08-19  
-- **Level:** 1.0  
-- **Target:** PE x86  
-- **Tools:** Ghidra, `strings`, Wine  
+- **Source:** [crackmes.one](https://crackmes.one/crackme/5ab77f5433c5d40ad448c16d)
+- **Date:** 2026-08-19
+- **Difficulty:** 1.0
+- **Target:** PE32 / x86
+- **Tools:** Ghidra, `file`, `strings`, Wine, VMware Workstation Pro
 
 ## Goal
 
 Find the activation key.
 
-## My flow (raw)
+## First look
 
-### First impression
+I started by identifying the file:
 
-- Ran `file crackme0x1.exe` → `PE32 executable, Intel i386, 4 sections`.  
-- Ran `strings crackme0x1.exe` and found messages like:
-  - `"Enter activation key:"`
-  - `"Congratulations you have found the correct key!"`
-  - `"Hmm it's a start... try again.."`
-  - `"Ooo.. getting warmer.. try again"`
-  - `"Keep trying... nearly there.."`
-  - `"Fuck...so close...try again"`
-  - `"Who hard can it be?"`
-  - `"Not even remotely close, n00b :)"`
+```bash
+file crackme0x1.exe
+```
 
-**Guess:**  
-The program asks for an activation key.  
-- Correct key → `"Congratulations you have found the correct key!"`  
-- Completely wrong → `"Not even remotely close, n00b :)"`  
-- Partially correct → one of the “warmer” messages depending on how many characters are correct.
+The result showed that it was a 32-bit Windows executable:
 
-### What I tried
+```text
+PE32 executable, Intel i386, 4 sections
+```
 
-- Tried running directly on Linux:  
-  `./crackme0x1` → failed with “exec format error”.  
-  ⇒ Installed Wine to run the Windows binary.
+Since the file is a Windows executable, I could not run it directly on Linux:
 
-- Ran the binary with Wine to understand normal flow:
-  - Prompts: `"Enter activation key:"`
-  - Wrong key → `"Not even remotely close, n00b :)"`
+```bash
+./crackme0x1.exe
+```
 
-- Used Ghidra for static analysis:
-  - Entry point immediately calls:
-    - `security_init_cookie()`
-    - `tmainCRTStartup()`
-  - In the function list, I identified:
-    - A function I renamed `main()` (see Technical details, call by tmainCRTStartup)
-    - A function I renamed `check()` (see Technical details, call by main)
+This resulted in an `exec format error`.
 
-### Where I got stuck + Breakthrough
+I then used `strings` to look for useful messages:
 
-**Wine / 32‑bit issue**
+```bash
+strings crackme0x1.exe
+```
 
-- Problem: The binary is 32‑bit, but default `wine` on my system was 64‑bit only and couldn’t run 32‑bit programs.  
-- Fix:
-  ```bash
-  sudo dpkg --add-architecture i386
-  sudo apt update
-  sudo apt install wine32:i386
-  ```
+Some interesting strings were:
 
-**Dynamic analysis**
+```text
+Enter activation key:
+Congratulations you have found the correct key!
+Hmm it's a start... try again..
+Ooo.. getting warmer.. try again
+Keep trying... nearly there..
+Fuck...so close...try again
+Who hard can it be?
+Not even remotely close, n00b :)
+```
 
-- Couldn’t get `wine --gdb` working properly.  
-- Decided to rely on **full static analysis in Ghidra**.
+These messages suggested that the program gives feedback based on how many characters of the activation key are correct. My initial guess was that the program probably compares the input character by character.
 
-**Understanding the obfuscated comparison**
+## Running the program
 
-- Confusing expression in decompiler:
-  ```c
-  (int)pcVar6[0x403024] ^ (uint)pcVar6 == (int)pcVar6[0x403728]
-  ```
-  Both `pcVar6` and `pcVar1` are `char*`.
+I installed Wine so that I could run the executable:
 
-- Reasoning:
-  - `pcVar6` was initially `nullptr`, then set to the start of a string.  
-  - `pcVar6[0x403024]` effectively points to the beginning of that string.  
-  - `pcVar1` runs in a loop until `*pcVar1 == '\0'`, so `pcVar1 - start_of_string` is essentially `strlen`.
+```bash
+sudo dpkg --add-architecture i386
+sudo apt update
+sudo apt install wine32:i386
+```
 
-- There’s a lot of decompiler noise and obfuscation, so I focused on the core check:
-  ```text
-  ((int)pcVar6[0x403024] ^ (uint)pcVar6) == (int)pcVar6[0x403728]
-  ```
-  Which simplifies to:
-  ```text
-  (key_string[i] ^ i) == input[i]
-  ```
-  So the correct input must be:
-  ```text
-  input[i] = key_string[i] ^ i
-  ```
+After setting up Wine, I ran the program and confirmed its basic behavior:
 
-## What I learned
+```text
+Enter activation key:
+```
 
-- First time encountering **heavily obfuscated code** with junk instructions and anti‑bruteforce behavior.  
-- Second time seeing an **XOR‑based key string**.  
-- New things I learned:
-  - Ghidra string labels like `s_[string]_[address]`.  
-  - Basic Wine / Wine32 setup for 32‑bit Windows binaries.  
-  - When only doing static analysis, **trust disassembly more than decompiled C** when obfuscation is present.
+Entering an incorrect value produced:
 
-## Technical details
+```text
+Not even remotely close, n00b :)
+```
 
-### Key addresses / function names
+The feedback messages made me think that the validation function probably stops at the first incorrect character and uses the position of that character to select a response.
 
-- `entry` at `0x0040182d`  
-- `main` at `0x00401000`  
-- `check` at `0x00401050`
+## Finding the validation function
 
-### Important logic (pseudo‑code)
+I imported the executable into Ghidra and ran the normal analysis.
 
-**Main loop (simplified):**
+The entry point first went through runtime initialization:
+
+- `security_init_cookie()`
+- `tmainCRTStartup()`
+
+At first, these functions were distracting because they were not part of the crackme’s actual logic. I followed the calls until I reached the application-specific code.
+
+I renamed the relevant functions:
+
+- `0x00401000` → `main`
+- `0x00401050` → `check`
+
+The simplified program flow looked like this:
+
+```text
+tmainCRTStartup
+        ↓
+      main
+        ↓
+      check
+        ↓
+ success or feedback message
+```
+
+The `main` function repeatedly asks for an activation key and calls `check()`.
+
+## Getting stuck in the decompiler
+
+The decompiler output was difficult to read. One expression looked like this:
 
 ```c
-int main(void) {
-    do {
-        // ask for input, call check()
-    } while (!check());
+(int)pcVar6[0x403024] ^ (uint)pcVar6 == (int)pcVar6[0x403728]
+```
+
+At first, I was unsure what this expression meant. The variables were both represented as `char *`, and the pointer arithmetic made the output look much more complicated than it probably was.
+
+I also saw a loop that walked through a string until it reached a null byte. This was effectively calculating the string length:
+
+```c
+while (*pcVar1 != '\0') {
+    pcVar1++;
 }
 ```
 
-**Check function (reconstructed):**
+So:
+
+```text
+pcVar1 - start_of_string
+```
+
+was effectively:
+
+```text
+strlen(string)
+```
+
+The decompiler output contained a lot of noise, so I stopped trying to understand every generated variable and focused on the comparison that controls the result.
+
+## Understanding the key check
+
+After following the relevant variables and comparing the decompiler output with the disassembly, I simplified the important condition to:
+
+```text
+(key_string[i] ^ i) == input[i]
+```
+
+The hardcoded string was:
+
+```text
+phahh`b
+```
+
+This means the program does not compare the input directly with the hardcoded string. Instead, it XORs each character with its index:
+
+```text
+input[i] = key_string[i] ^ i
+```
+
+The validation loop can be represented like this:
 
 ```c
 bool check(void) {
-    char* input = user_input;
-    char* key_string = "phahh`b";
+    char *input = user_input;
+    char *key_string = "phahh`b";
 
     int len_key = strlen(key_string);
     int len_input = strlen(input);
 
     if (len_key < len_input) {
-        cout << "Not even remotely close, n00b :)\n";
+        puts("Not even remotely close, n00b :)");
         return false;
     }
 
     int i = 0;
-    while (i < len_input && (key_string[i] ^ i) == input[i]) {
+
+    while (i < len_input &&
+           (key_string[i] ^ i) == input[i]) {
         i++;
     }
 
     if (i == len_key) {
-        cout << "Congratulations you have found the correct key!\n";
+        puts("Congratulations you have found the correct key!");
         return true;
     }
 
     switch (i) {
         case 0:
-            cout << "Not even remotely close, n00b :)\n";
+            puts("Not even remotely close, n00b :)");
             break;
         case 1:
-            cout << "Hmm it's a start... try again..\n";
+            puts("Hmm it's a start... try again..");
             break;
         case 2:
-            cout << "Ooo.. getting warmer.. try again\n";
+            puts("Ooo.. getting warmer.. try again");
             break;
         case 3:
-            cout << "Keep trying... nearly there..\n";
+            puts("Keep trying... nearly there..");
             break;
         case 4:
-            cout << "Fuck...so close...try again\n";
+            puts("Fuck...so close...try again");
             break;
         case 5:
-            cout << "Who hard can it be?\n"; // author typo: "Who" instead of "How"
+            puts("Who hard can it be?");
             break;
         default:
-            cout << "Not even remotely close, n00b :)\n";
+            puts("Not even remotely close, n00b :)");
             break;
     }
 
@@ -174,20 +214,66 @@ bool check(void) {
 }
 ```
 
-### Solution
+The `switch` explains the feedback messages: `i` represents how many characters matched before the first mismatch.
 
-Core comparison:
+## Solution
 
-```text
-(key_string[i] ^ i) == input[i]
-```
-
-Therefore the correct activation key is:
+The required key is generated with:
 
 ```text
 input[i] = key_string[i] ^ i
 ```
 
-With `key_string = "phahh`b"`, compute each character XOR its index to get the final key.
+Using:
 
-I didn’t write a script; I asked an AI assistant to apply this XOR for each character of `key_string = "phahh`b"` and give me the resulting activation key.
+```text
+key_string = "phahh`b"
+```
+
+the key can be calculated character by character.
+
+I did not write a script for this step. I used an AI assistant to apply the XOR operation to each character after I had already derived the algorithm from the binary.
+
+The important part was not the calculation itself, but understanding the validation logic:
+
+```text
+(key_string[i] ^ i) == input[i]
+```
+
+## What I learned
+
+- This was my first encounter with heavily confusing decompiler output containing junk code and unnecessary variables.
+- The decompiled expression looked intimidating, but the actual validation logic was simple once I focused on the comparison.
+- The “warmer” messages revealed that the check works character by character.
+- I learned to follow cross-references from success and failure strings.
+- I learned that Ghidra’s decompiler output should be treated as an interpretation, not the original source code.
+- When the decompiler becomes confusing, I should compare it with the assembly and isolate the smallest important condition.
+- I learned how to install Wine32 support for running 32-bit Windows programs on Linux.
+
+## Important addresses
+
+```text
+Entry point: 0x0040182d
+main:        0x00401000
+check:       0x00401050
+```
+
+## Takeaway
+
+This crackme looked more complicated than it really was because of the decompiler output. The useful path was:
+
+```text
+Find success string
+        ↓
+Follow its cross-reference
+        ↓
+Locate the validation function
+        ↓
+Ignore decompiler noise
+        ↓
+Simplify the comparison
+        ↓
+Derive the XOR formula
+```
+
+The main lesson was to focus on the condition that decides success rather than trying to understand every line of noisy decompiled code.
