@@ -1,20 +1,20 @@
-\# <Challenge Name> – <Site>
+# Challenge Name – Site
 
 
 
-\- Link: <URL>
+- Link: URL
 
-\- Date: <YYYY-MM-DD>
+- Date: DD-MM-YYYY
 
-\- Level: <very easy / easy / 1.0 / etc.>
+- Level: <very easy / easy / 1.0 / etc.>
 
-\- Target: <PE x86 / ELF x64 / .NET / etc.>
+- Target: <PE x86 / ELF x64 / .NET / etc.>
 
-\- Tools: <Ghidra / x64dbg / radare2 / strings / etc.>
+- Tools: <Ghidra / x64dbg / radare2 / strings / etc.>
 
 
 
-\## Goal
+## Goal
 
 
 
@@ -22,81 +22,79 @@
 
 
 
-\## My flow (raw)
+## My flow (raw)
 
 
 
-\- First impression:
+- First impression:
 
-&#x20; - <what I noticed first: strings, obvious checks, etc.>
+ <what I noticed first: strings, obvious checks, etc.>
 
-\- What I tried:
+- What I tried:
 
-&#x20; - <attempt 1: what I did, what happened>
+ <what I did, what happened>
 
-&#x20; - <attempt 2: dead end, wrong assumption, etc.>
+- Where I got stuck:
 
-\- Where I got stuck:
+ <specific function / check / idea that confused me>
 
-&#x20; - <specific function / check / idea that confused me>
+- Breakthrough:
 
-\- Breakthrough:
-
-&#x20; - <what finally worked: which function, which condition, which patch>
+ <what finally worked: which function, which condition, which patch>
 
 
 
-\## What I learned
+## What I learned
 
 
 
-\- <pattern / technique / tool trick>
+- <pattern / technique / tool trick>
 
-\- <thing I’ll do differently next time>
+- <thing I’ll do differently next time>
 
-\- <new concept: e.g., “first time seeing XOR decode loop”>
-
-
-
-\## Technical details (optional)
+- <new concept: e.g., “first time seeing XOR decode loop”>
 
 
 
-\- Key addresses / function names:
-
-&#x20; - `main` at `0x...`
-
-&#x20; - check function at `0x...`
-
-\- Important logic (pseudo‑code / decompiled snippet):
-
-&#x20; ```c
-
-&#x20; // example
-
-&#x20; if (check\_password(input) == 0) {
-
-&#x20;     puts("Correct");
-
-&#x20; }
-
-&#x20; ```
-
-\- Patch / solution (if allowed):
-
-&#x20; - Offset / address: `0x...`
-
-&#x20; - Original bytes: `...`
-
-&#x20; - Patched bytes: `...`
-
-&#x20; - Or: keygen idea / valid example input.
+## Technical details (optional)
 
 
 
-\## Updates
+- Key addresses / function names:
+
+ - `main` at `0x...`
+
+ - check function at `0x...`
+
+- Important logic (pseudo‑code / decompiled snippet):
+
+ ```c
+
+ // example
+
+ if (check\_password(input) == 0) {
+
+     puts("Correct");
+
+ }
+
+ ```
+
+- Patch / solution (if allowed):
+
+ Offset / address: `0x...`
+
+ Original bytes: `...`
+
+ Patched bytes: `...`
+
+ Or: keygen idea / valid example input.
 
 
 
-\- <YYYY-MM-DD>: <added better explanation / fixed mistake / new insight>
+## Updates
+
+
+
+- <YYYY-MM-DD>: <added better explanation / fixed mistake / new insight>
 
