@@ -2,7 +2,7 @@
 
 
 
-- Link: [URL](https://crackmes.one/crackme/5ab77f5433c5d40ad448c16d)
+- Link: https://crackmes.one/crackme/5ab77f5433c5d40ad448c16d
 
 - Date: 19/08/2026
 
