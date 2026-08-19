@@ -1,4 +1,4 @@
-# crackme0x1 by picklede
+# crackme0x1 by pickled
 
 - **Source:** [crackmes.one](https://crackmes.one/crackme/5ab77f5433c5d40ad448c16d)
 - **Date:** 2026-08-19
