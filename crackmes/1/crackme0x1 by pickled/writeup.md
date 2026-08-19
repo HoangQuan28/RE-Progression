@@ -1,16 +1,16 @@
-# crackme0x1 by pickled – crackmes.one
+# crackme0x1 by picklede – crackmes.one
 
 
 
-- Link: https://crackmes.one/crackme/5ab77f5433c5d40ad448c16d
+- Link: [URL](https://crackmes.one/crackme/5ab77f5433c5d40ad448c16d)
 
 - Date: 19/08/2026
 
-- Level: <1.0>
+- Level: 1.0
 
-- Target: PE x86
+- Target: PE x86 
 
-- Tools: Ghidra, x64dbg, strings
+- Tools: Ghidra, x64dbg, strings 
 
 
 
@@ -18,7 +18,7 @@
 
 
 
-
+<What I’m trying to do: find password, patch binary, understand check, etc.>
 
 
 
@@ -28,21 +28,19 @@
 
 - First impression:
 
-&#x20; - <what I noticed first: strings, obvious checks, etc.>
+ <what I noticed first: strings, obvious checks, etc.>
 
 - What I tried:
 
-&#x20; - <attempt 1: what I did, what happened>
-
-&#x20; - <attempt 2: dead end, wrong assumption, etc.>
+ <what I did, what happened>
 
 - Where I got stuck:
 
-&#x20; - <specific function / check / idea that confused me>
+ <specific function / check / idea that confused me>
 
 - Breakthrough:
 
-&#x20; - <what finally worked: which function, which condition, which patch>
+ <what finally worked: which function, which condition, which patch>
 
 
 
@@ -64,33 +62,33 @@
 
 - Key addresses / function names:
 
-&#x20; - `main` at `0x...`
+ - `main` at `0x...`
 
-&#x20; - check function at `0x...`
+ - check function at `0x...`
 
 - Important logic (pseudo‑code / decompiled snippet):
 
-&#x20; ```c
+ ```c
 
-&#x20; // example
+ // example
 
-&#x20; if (check\_password(input) == 0) {
+ if (check\_password(input) == 0) {
 
-&#x20;     puts("Correct");
+     puts("Correct");
 
-&#x20; }
+ }
 
-&#x20; ```
+ ```
 
 - Patch / solution (if allowed):
 
-&#x20; - Offset / address: `0x...`
+ Offset / address: `0x...`
 
-&#x20; - Original bytes: `...`
+ Original bytes: `...`
 
-&#x20; - Patched bytes: `...`
+ Patched bytes: `...`
 
-&#x20; - Or: keygen idea / valid example input.
+ Or: keygen idea / valid example input.
 
 
 
@@ -98,5 +96,5 @@
 
 
 
-\- <YYYY-MM-DD>: <added better explanation / fixed mistake / new insight>
+- <YYYY-MM-DD>: <added better explanation / fixed mistake / new insight>
 
