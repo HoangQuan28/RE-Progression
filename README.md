@@ -1,4 +1,4 @@
-#RE-Progression
+# RE-Progression
 
 Personal log of my reverse engineering progress, thought processes, and lessons learned.  
 Progression Focus: beginner → intermediate → advanced RE (Root‑Me, crackmes.one, CTFs).
