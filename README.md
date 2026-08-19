@@ -13,9 +13,8 @@ Progression Focus: beginner → intermediate → advanced RE (Root‑Me, crackme
 
 ## Structure
 
-- `rootme/` – Writeups and notes for [Root‑Me](https://www.root-me.org/) challenges.
 - `crackmes-one/` – Notes for [crackmes.one](https://crackmes.one/) challenges.
-- `templates/` – Templates I reuse for challenges and sessions.
+- `templates/` – Templates I reuse for challenges.
 
 ## How I write notes
 
