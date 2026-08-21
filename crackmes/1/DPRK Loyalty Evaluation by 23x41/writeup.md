@@ -1,89 +1,92 @@
-# Writeup Template 
-
-> Use this as a flexible guide, not a rigid form.  
-> Focus on your actual thought process: what noticed, tried, misunderstood, and eventually figured out.  
-> It is fine if early writeups are messy; improve them over time.
-
----
-
 ## Challenge Information
 
-- **Name:** <challenge name>  
-- **Author:** <author name>  
-- **Source:** <crackmes.one / Root‑Me / other>  
-- **Link:** <URL>  
-- **Date solved:** YYYY-MM-DD  
-- **Difficulty:** <e.g., 1.0 / 1.5 / 2.0 or “very easy / easy / medium”>  
+- **Name:** DPRK Loyalty Evaluation  
+- **Author:** 23x41  
+- **Source:** crackmes.one
+- **Link:** https://crackmes.one/crackme/6a5995410b25d281a656896f
+- **Date solved:** 19/08/2026 
+- **Difficulty:** 1.2  
 
 ### Target Details
 
-- **File name:** <e.g., crackme0x1.exe>  
-- **Format:** <ELF / PE / Mach‑O / .NET / Java / Android / other>  
-- **Architecture:** <x86 / x64 / ARM / other>  
-- **Platform:** <Linux / Windows / macOS / cross‑platform>  
-- **Notable properties:** <stripped / packed / obfuscated / anti‑debug / none of the above>  
+- **File name:** juche_loyalty_test  
+- **Format:** ELF>  
+- **Architecture:** x64 
+- **Platform:** Linux
+- **Notable properties:** not stripped, dynamically linked, anti-debug(ptrace)  
 
 ### Tools Used
 
-- **Static analysis:** <Ghidra / IDA / Binary Ninja / radare2 / other>  
-- **Dynamic analysis:** <GDB / x64dbg / WinDbg / radare2 / none>  
-- **Utilities:** <strings / file / readelf / objdump / xxd / other>  
-- **Other:** <Wine / VM / scripts / AI assistance>  
+- **Static analysis:** Ghidra
+- **Dynamic analysis:** GDB 
+- **Utilities:** strings, file, readelf, xxd, ltrace, strace
+- **Other:**  VM 
 
 ---
 
 ## Objective
 
-<State the goal in 1–2 sentences, in your own words.>
-
-Examples:
-
-- “Find a valid name/serial pair.”  
-- “Make the program print the success message.”  
-- “Understand and reproduce the key generation algorithm.”
+Goal is to answer 2 question correctly to pass
+Alternative path: Enter RE-EDUCATION MODE and exploit format string vulnerability.
 
 ---
 
 ## First Look
 
-Describe what you did before opening the disassembler.
-
-- How did you identify the file?  
-- What did `file` and `strings` show?  
-- What did running the program (in a safe environment) tell you?
-
-Include only the commands and outputs that mattered to you.
+Before opening the disassembler, I ran:
+ - file to identify the format of the file
+ - strings to see hardcoded strings for clues
+ - strace, ltrace blocked by anti debugger ptrace
 
 ```bash
-file <filename>
-strings -n 4 <filename> | less
-strings -n 4 <filename> | grep -iE 'key|password|correct|wrong|fail|success'
+file juche_loyalty_test 
+strings -n 4 juche_loyalty_test | less
+strings juche_loyalty_test | egrep -i "key|password|answer|solution|flag"
 ```
 
-- **File type:** <output of `file`>  
-- **Architecture:** <x86/x64/etc.>  
-- **Stripped:** <yes/no/unsure>  
-- **Other observations:** <sections, imports, obvious packing, etc.>  
+- **File type:** juche_loyalty_test: ELF 64-bit LSB executable, x86-64, version 1 (SYSV), dynamically linked, interpreter /lib64/ld-linux-x86-64.so.2, BuildID[sha1]=64727242c7789c5856649372537898748fd5bce2, for GNU/Linux 3.2.0, with debug_info, not stripped  
+- **Architecture:** x64  
+- **Stripped:** no
+- **Other observations:** none  
 
 ### Interesting Strings
+Questions:
+  "Question 1: How many holes-in-one has the Supreme Leader officially achieved?"
+  "Question 2: At which sacred mountain did the Supreme Leader receive the Juche mandate?"
 
-List the strings that shaped your hypothesis:
+If answer correct:
+  "[GLORIOUS VICTORY]
+  The Supreme Leader has accepted your loyalty.
+  Your Songbun is now the highest possible.
+  You may now access the inner party terminal."
 
-- `"<Enter password/serial/key>"` – <why it matters>  
-- `"<Success message>"` – <why it matters>  
-- `"<Failure message>"` – <why it matters>  
-- Other notable strings:
-  - `"<string>"` – <why it matters>  
+If answer incorrect:
+  "[RE-EDUCATION MODE ACTIVATED]
+  Write your self-criticism. Be thorough, comrade.
+  Self-criticism:"
+  "WRONG! Your ideological deviation has been noted."
+  "INCORRECT! You have failed the test of loyalty."
 
+Anti-Debugger:
+  "[WARNING] Debugger detected. The Ministry of State Security has been notified."
+  "ptrace"
+
+Hardcoded flag:
+  "FLAG{0x8A7_JUCHE_FORMAT_STRING_MASTERY}"
 ### Initial Hypothesis
 
-Write 2–5 sentences about what you thought was happening before deep analysis.
-
-Examples:
-
-- “The program reads a serial, compares it against a transformed version of a hardcoded string, and prints success if they match.”  
-- “There is a length check, then a character-by-character comparison with some transformation (likely XOR or simple arithmetic).”  
-- “The multiple failure messages suggest partial feedback based on how many characters are correct.”
+So this mean the file use ptrace to for anti-debug, and it workflow can be simplified:
+  Question 1
+    ->Correct: Continue to question 2
+    ->Incorrect: Continue to RE-EDUCATION MODE
+  
+  Question 2
+    ->Correct: Win message -> the hardcoded flag
+    ->Incorrect: Continue to RE-EDUCATION MODE
+  
+  RE-EDUCATION MODE:
+    ->Program log out
+    ->Exploit the format string vulnerability of the printf() function
 
 ---
 
@@ -91,206 +94,193 @@ Examples:
 
 ### Entry Point and Main Flow
 
-Describe how you found the application logic:
+Because it is NOT STRIPPED, Ghidra can identified the main function so I can start there rightaway.
 
-- Where did you start in the disassembler?  
-- Which functions were runtime noise (CRT, loaders, etc.)?  
-- Which functions did you rename, and why?
-
-- **Entry point:** <address or description>  
-- **Main function:** <name or address>  
+- **Entry point:** 0x00401000 
+- **Main function:** 0x0040141a  
 - **Key functions identified:**
-  - `<function name or address>` – <purpose>  
-  - `<function name or address>` – <purpose>  
+  - take_loyalty_test() – asking question and check the answer (0x004012e4)
 
 Describe the high-level flow in your own words:
 
-1. <Step 1: input, initialization, etc.>  
-2. <Step 2: transformation or validation>  
-3. <Step 3: success/failure output>  
+1. <Step 1: initialization
+2. <Step 2: validation through take_loyalty_test() function  
+3. <Step 3: success -> grant_party_membership()
+            failure -> self_criticism_mode()
+**Note:** The flag is hardcoded in the `grant_party_membership()` function at `.rodata:0x404000`.
+Simply finding it through static analysis (Ghidra/strings) is sufficient to solve the challenge.
 
 ### Validation Logic
 
-Describe the core validation routine as you understood it:
+- **Function:** take_loyalty_test()  
+- **Inputs:** use cin
+- **Outputs:** success ->  grant_party_membership() / fail -> self_criticism_mode()
 
-- **Function:** <name or address>  
-- **Inputs:** <where input comes from>  
-- **Outputs:** <success/failure, messages, return value>  
+The answer for question 1 is hardcode as "38\0"
+The answer for question 2 is hardcode as "Mount Paektu\0"
+However for question 2, typical cin function stop reading after space. Hence making normally input will never work.
 
-Explain the important comparison or transformation:
 
-- <Describe the condition that decides success/failure.>  
-- <Show simplified pseudo-code or a short decompiled snippet if helpful.>  
-
-Example structure (adapt to your challenge):
+Example structure :
 
 ```c
-// Pseudo-code example (adapt to your challenge)
-bool check_serial(const char *input) {
-    const char *secret = "<hardcoded string>";
-    int len = strlen(secret);
+void take_loyalty_test(void)
 
-    if (strlen(input) != len) {
-        return false;
+{
+  int check;
+  char answer [64];
+  char correct_q2 [13];
+  char correct_q1 [3];
+  
+  correct_q1[0] = '3';
+  correct_q1[1] = '8';
+  correct_q1[2] = '\0';
+  strncpy(correct_q2,"Mount Paektu",13);
+  cout<<"\nQuestion 1: How many holes-in-one has the Supreme Leader officially achieved?\n";
+  cout<<"Your answer: ";
+  cin>>answer;
+  check = strcmp(answer,correct_q1);
+  if (check == 0) {
+    cout<<"\nQuestion 2: At which sacred mountain did the Supreme Leader receive the Juche mandate?\n";
+    cout<<"Your answer: ";
+    cin>>answer;
+    check = strcmp(answer,correct_q2);
+    if (check == 0) {
+      grant_party_membership();
     }
-
-    for (int i = 0; i < len; i++) {
-        if ((secret[i] ^ i) != (unsigned char)input[i]) {
-            return false;
-        }
+    else {
+      cout<<"\nINCORRECT! You have failed the test of loyalty.\n";
+      self_criticism_mode();
     }
-
-    return true;
+  }
+  else {
+    cout<<"\nWRONG! Your ideological deviation has been noted.\n";
+    self_criticism_mode();
+  }
+  return;
 }
 ```
-
-If the decompiler output was confusing, describe:
-
-- What looked wrong or noisy.  
-- How you simplified it (e.g., focusing on one comparison, checking assembly, etc.).  
-
 ### Key Addresses and Strings
 
-- **Main function:** <address>  
-- **Check/validation function:** <address>  
+- **Main function:** 0x0040141a  
+- **Check/validation function:** 0x004012e4
 - **Important strings:**
-  - `"<success>"` at <address / function>  
-  - `"<failure>"` at <address / function>  
-- **Other important locations:** <addresses and brief description>  
+  - `"<success>"` at grant_party_membership() at 0x004011a6 
+  - `"<failure>"` at self_criticism_mode() at 0x00401239
 
----
+- The self_criticism_mode() function have critical spot to exploit:
+```code
+char criticism [128];
+printf(criticism);
+```
+=> Can apply format string exploitation with stack memory leak
 
-## Dynamic Analysis (if used)
-
-If you used a debugger, describe only what mattered. If not, say so briefly.
-
-### Debugger Setup
-
-- **Debugger:** <GDB / x64dbg / radare2 / other>  
-- **Target:** <ELF / PE / other>  
-- **Environment:** <native Linux / Wine / VM>  
-
-### Breakpoints and Observations
-
-Describe only the most important breakpoints and what they taught you:
-
-- **Breakpoint 1:** <location, e.g., `main` or `check` function>  
-  - **Observation:** <what you saw: registers, memory, input buffer, etc.>  
-
-- **Breakpoint 2:** <e.g., just before the success/failure branch>  
-  - **Observation:** <values used in comparison, transformed data, etc.>  
-
-Example (GDB-style):
-
-```gdb
-break *0x401234
-run
-info registers
-x/s $rdi
-x/20bx $rsi
+In  Re-education mode:
+I tried normal input such as
+```text
+AAAA
+```
+The program printf out AAAA
+Then I tried to do
+```text
+AAAAAAAA %p %p %p %p %p %p %p %p %p %p %p %p %p
+```
+The output is:
+```text
+AAAAAAAA 0xa 0x417760 0x30 (nil) (nil) 0x4141414141414141 0x2520702520702520 0x2070252070252070 0x7025207025207025 0x2520702520702520 0x70252070252070 0x7fffffffdcf0 0x404080
+```
+I can see there is
+```text
+0x4141414141414141 (AAAAAAAA)
+```
+To confirmed of stack where the printf input belong I do
+```text
+AAAAAAAA %6$p (6 is counted base on last output)
+```
+Output:
+```text
+AAAAAAAA 0x4141414141414141
 ```
 
-Explain what these values told you, in your own words.
+I confirmed the vulnerability:
+- Input appears at position 6: `AAAAAAAA %6$p → 0x4141414141414141`
+- Leaked over 200 stack values using `%N$p`
+- **Finding:** No direct pointer to the found on the stack
+
+This mean I can do format string vuln exploitation and stack buffer overflow for this to make the program print the flag itself. However my current skill (19/08/2026) not sufficient for this. 
 
 ---
 
 ## Solution
+  FLAG{0x8A7_JUCHE_FORMAT_STRING_MASTERY}
+
+### Alternative Solution: GDB Bypass
+
+1. Run the binary in GDB:
+   ```bash
+   gdb -q ./juche_loyalty_test
+   break take_loyalty_test
+   run
+   ```
+
+2. Answer Question 1 correctly: `38`
+
+3. For Question 2, enter any text (it will fail due to whitespace truncation)
+
+4. Before the strcmp result is checked, patch the return value:
+   ```gdb
+   break strcmp
+   continue
+   # After breakpoint hits
+   finish  # Run until strcmp returns
+   set $eax = 0  # Force success (0 = equal)
+   continue
+   ```
+
+5. The program will execute `grant_party_membership()` and print the flag.
 
 ### Core Idea
 
-Explain the key insight in plain language:
-
-- <What transformation is applied to the input or secret?>  
-- <What condition must be satisfied for success?>  
-
-Example:
-
-- “The correct serial is obtained by XORing each character of a hardcoded string with its index.”  
-- “The program expects `input[i] = (secret[i] + i) & 0xFF`.”  
-
-### Formula / Algorithm
-
-Write the final formula or algorithm clearly:
-
-```text
-input[i] = f(secret, i)
-```
-
-or
-
-```c
-// Example pattern (adapt to your challenge)
-for (int i = 0; i < len; i++) {
-    required[i] = secret[i] ^ i;
-}
-```
-
-### Example Valid Input
-
-Provide at least one concrete example:
-
-- **Name (if applicable):** `<example name>`  
-- **Serial / Key:** `<example serial>`  
-
-Briefly describe how you derived it:
-
-- <“I computed `secret[i] ^ i` for each character.”>  
-- <“I wrote a small script to generate the serial from the formula.”>  
-
-If you used AI or a script, mention it honestly:
-
-- “I used a short Python script to apply the formula.”  
-- “I used an AI assistant to compute the final key from the derived formula.”
-
----
+The program will ask two question, the second one are impossible to answer correctly
+-> The actual solution is through the RE-EDUCATION program which use printf() of the user input lead to format string vulnerability. Exploit this can leak the flag out.
 
 ## What I Learned
 
-Write this as a short reflection, not a checklist.
-
-Include:
-
-- New patterns you saw (e.g., XOR-with-index, checksum, partial feedback).  
-- Tool skills you improved (e.g., better Ghidra navigation, GDB commands).  
-- Concepts that became clearer (e.g., calling conventions, stack layout, PE structure).  
-- Mistakes or dead ends, and what you will do differently next time.
-
-Example bullets:
-
-- “First time seeing partial-feedback messages based on how many characters are correct.”  
-- “Learned to trust disassembly more than decompiler output when obfuscation is present.”  
-- “Practiced following cross-references from success strings to find the validation function faster.”  
-- “Spent too long on runtime initialization code; next time I will ignore CRT noise earlier.”
+- **Format string vulnerabilities:** How `printf(user_input)` allows memory leaks
+- **Stack memory layout:** How to identify where input appears on the stack
+- **Static analysis power:** Flags are often visible in Ghidra/strings without exploitation
+- **When to stop:** Knowing when static analysis is enough vs. when to exploit
 
 ---
 
-## Appendix (Optional)
+## Lessons for Next Time
 
+1. **Always check static analysis first** - Run `strings` and search Ghidra before exploiting
+2. **Format string exploitation is advanced** - Requires understanding memory layout deeply
+3. **Not every vulnerability needs exploitation** - Sometimes the flag is just visible
+4. **Document failed attempts** - They show thought process and learning
+  
 ### Commands Used
 
-Include only the commands that were actually useful:
-
 ```bash
-file <filename>
-strings -n 4 <filename> | grep -iE '...'
-readelf -h <filename>
-objdump -d -M intel <filename> | less
+file juche_loyalty_test
+strings -n 4 juche_loyalty_test | egrep -i 'key|password|flag|answer'
+ghidra
+gdb -q ./[filename]
+break [function_name/address]
+run
+si
+fin
+
 ```
 
 ### Scripts or Verification Code
 
-If you wrote a script or small program to verify or generate the key, include it here (or link to it).
-
-```python
-# Example Python snippet (adapt or remove)
-secret = "hello"
-key = "".join(chr(ord(c) ^ i) for i, c in enumerate(secret))
-print(key)
-```
+not figured out yet
 
 ### Additional Notes
 
-Any extra observations, alternative approaches, or ideas for future improvements.
+Learn about Binary Exploitation and reattempt
 
 ---
 
